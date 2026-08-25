@@ -204,7 +204,6 @@
     padding:5px 9px; border-radius:999px; white-space:nowrap; flex:none;
   }
   .badge-open{background:var(--veg-soft); color:var(--veg);}
-  .badge-upcoming{background:var(--accent-soft); color:var(--accent);}
   .badge-ended{background:var(--surface-2); color:var(--text-muted);}
 
   .meal-card .live-remaining{
@@ -213,27 +212,31 @@
   }
 
   .section{margin-top:12px; border-top:1px dashed var(--border); padding-top:12px;}
-  .section-toggle{
-    width:100%; display:flex; align-items:center; justify-content:space-between;
-    background:none; border:none; padding:0; cursor:pointer; color:var(--text);
-    font-family:'Manrope',sans-serif;
-  }
-  .section-toggle .label{
-    display:flex; align-items:center; gap:8px; font-weight:700; font-size:.82rem;
+  .section-label{
+    display:flex; align-items:center; gap:8px; font-weight:700; font-size:.82rem; color:var(--text);
   }
   .dot{width:9px;height:9px;border-radius:50%; flex:none;}
   .dot.veg{background:var(--veg);}
   .dot.nonveg{background:var(--nonveg);}
-  .section-toggle .count{color:var(--text-muted); font-weight:600;}
-  .chevron{width:16px; height:16px; transition:transform .3s ease; color:var(--text-muted); flex:none;}
-  .section.collapsed .chevron{transform:rotate(-90deg);}
+  .section-label .count{color:var(--text-muted); font-weight:600;}
+
+  .meal-expand-btn{
+    flex:none; width:30px; height:30px; border-radius:50%;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition: transform .25s ease, background .25s ease, color .25s ease;
+  }
+  .meal-expand-btn svg{width:15px; height:15px; transition: transform .3s ease;}
+  .meal-expand-btn:active{ transform:scale(0.9); }
+  .meal-card:not(.collapsed) .meal-expand-btn svg{ transform: rotate(180deg); }
+  .meal-card:not(.collapsed) .meal-expand-btn{ background:var(--accent-soft); color:var(--accent); }
 
   .item-list{
     list-style:none; margin:10px 0 0; padding:0;
     display:flex; flex-wrap:wrap; gap:7px;
     max-height:600px; overflow:hidden; transition: max-height .35s ease, opacity .3s ease, margin-top .35s ease;
   }
-  .section.collapsed .item-list{max-height:0; margin-top:0; opacity:0;}
+  .meal-card.collapsed .item-list{max-height:0; margin-top:0; opacity:0;}
   .item-chip{
     font-size:.78rem; font-weight:600; padding:7px 11px; border-radius:12px;
     background:var(--surface-2); border:1px solid var(--border); line-height:1.2;
@@ -259,12 +262,12 @@
   }
 
   /* ---------- Section header tint (veg / non-veg) ---------- */
-  .section[data-section^="veg-"] .section-toggle{
+  .section[data-section^="veg-"] .section-label{
     background:var(--veg-soft);
     padding:8px 10px;
     border-radius:12px;
   }
-  .section[data-section^="nv-"] .section-toggle{
+  .section[data-section^="nv-"] .section-label{
     background:var(--nonveg-soft);
     padding:8px 10px;
     border-radius:12px;
@@ -410,7 +413,7 @@
       <b>Applicable quantity:</b> Banana (1pc), Egg (2pcs), Chicken (4pcs), Fish (2pcs), Vegetable chop (2pcs), Piyazi (2pcs).<br>
       <b>Diet tags:</b> 💪 High Protein · 🍃 Light Diet — shown next to relevant dishes.
     </div>
-    <div class="credit">Effective from 24.08.2026 · Timings — Breakfast 7–10am · Lunch 1–3pm · Snacks 6–7pm · Dinner 8–10pm</div>
+    <div class="credit">Made by Dibyojyoti - Vibe Coded · Timings — Breakfast 7–10am · Lunch 1–3pm · Snacks 6–7pm · Dinner 8–10pm</div>
   </footer>
 
 </div>
@@ -626,8 +629,8 @@ const dayHeadingTag = document.getElementById('dayHeadingTag');
 
 function badgeFor(status){
   if(status==='open') return '<span class="meal-badge badge-open">Open now</span>';
-  if(status==='upcoming') return '<span class="meal-badge badge-upcoming">Upcoming</span>';
-  return '<span class="meal-badge badge-ended">Ended</span>';
+  if(status==='ended') return '<span class="meal-badge badge-ended">Ended</span>';
+  return '';
 }
 
 function chipHtml(name, isVeg){
@@ -655,7 +658,7 @@ function renderMeals(){
     const isToday = selectedDay===todayKey;
 
     return `
-    <div class="meal-card" data-meal="${meal.key}" style="animation-delay:${idx*0.05}s">
+    <div class="meal-card collapsed" data-meal="${meal.key}" style="animation-delay:${idx*0.05}s">
       <div class="meal-head">
         <div class="meal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${meal.icon}</svg></div>
         <div class="meal-title-row">
@@ -663,34 +666,33 @@ function renderMeals(){
             <div class="meal-name">${meal.label}</div>
             <div class="meal-time">${timeStr}</div>
           </div>
-          <div style="text-align:right;">
-            ${isToday ? `<div id="badge-${meal.key}"></div><div class="live-remaining" id="remain-${meal.key}"></div>` : ''}
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="text-align:right;">
+              ${isToday ? `<div id="badge-${meal.key}"></div><div class="live-remaining" id="remain-${meal.key}"></div>` : ''}
+            </div>
+            <button class="meal-expand-btn" aria-label="Expand menu">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
           </div>
         </div>
       </div>
 
       <div class="section" data-section="veg-${meal.key}">
-        <button class="section-toggle">
-          <span class="label"><span class="dot veg"></span>Veg <span class="count">(${vegItems.length})</span></span>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
+        <div class="section-label"><span class="dot veg"></span>Veg <span class="count">(${vegItems.length})</span></div>
         <ul class="item-list">${vegChips || '<li class="item-chip veg">No veg items listed</li>'}</ul>
       </div>
 
       ${nvItems.length ? `
       <div class="section" data-section="nv-${meal.key}">
-        <button class="section-toggle">
-          <span class="label"><span class="dot nonveg"></span>Non-Veg <span class="count">(${nvItems.length})</span></span>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
+        <div class="section-label"><span class="dot nonveg"></span>Non-Veg <span class="count">(${nvItems.length})</span></div>
         <ul class="item-list">${nvChips}</ul>
       </div>` : ''}
     </div>`;
   }).join('');
 
-  mealsContainer.querySelectorAll('.section-toggle').forEach(btn=>{
+  mealsContainer.querySelectorAll('.meal-expand-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      btn.closest('.section').classList.toggle('collapsed');
+      btn.closest('.meal-card').classList.toggle('collapsed');
     });
   });
 
@@ -851,7 +853,7 @@ function jumpToOccurrence(dayKey, dayOffset, mealKey, itemName){
     const card = mealsContainer.querySelector(`.meal-card[data-meal="${mealKey}"]`);
     if(card){
       card.scrollIntoView({behavior:'smooth', block:'center'});
-      card.querySelectorAll('.section.collapsed').forEach(s=>s.classList.remove('collapsed'));
+      card.classList.remove('collapsed');
       const chip = [...card.querySelectorAll('.item-chip[data-item]')].find(c=>c.dataset.item===itemName);
       if(chip){
         chip.classList.add('search-hit');
@@ -937,9 +939,7 @@ function updateLiveStatuses(){
       const remainEl = document.getElementById(`remain-${meal.key}`);
       if(badgeEl) badgeEl.innerHTML = badgeFor(info.status);
       if(remainEl){
-        if(info.status==='open') remainEl.textContent = 'Closes in ' + fmtDuration(info.target-now);
-        else if(info.status==='upcoming') remainEl.textContent = 'Opens in ' + fmtDuration(info.target-now);
-        else remainEl.textContent = '';
+        remainEl.textContent = info.status==='open' ? ('Closes in ' + fmtDuration(info.target-now)) : '';
       }
     });
   }
