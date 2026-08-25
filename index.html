@@ -27,22 +27,36 @@
     color-scheme: light;
   }
   html.dark{
-    --bg:#18140F;
-    --surface:#231D16;
-    --surface-2:#2B2419;
-    --text:#F3ECDD;
-    --text-muted:#A79A85;
-    --accent:#E2794F;
-    --accent-soft:#3A281E;
-    --turmeric:#F0BB4E;
-    --veg:#8CBB63;
-    --veg-soft:#26301D;
-    --nonveg:#E2794F;
-    --nonveg-soft:#3A2820;
-    --border:#392F22;
-    --ring-track:#392F22;
-    --shadow: 0 8px 28px -12px rgba(0,0,0,0.55);
+    --bg:#08050D;
+    --surface:#140A22;
+    --surface-2:#1D0F33;
+    --text:#F1E8FF;
+    --text-muted:#9B84C4;
+    --accent:#B24BFF;
+    --accent-soft:#3A1568;
+    --turmeric:#FF4FD8;
+    --veg:#39FF88;
+    --veg-soft:#0F3324;
+    --nonveg:#FF4B6E;
+    --nonveg-soft:#3A0F1E;
+    --border:#2C1850;
+    --ring-track:#241247;
+    --shadow: 0 0 22px -4px rgba(178,75,255,0.45), 0 8px 28px -12px rgba(0,0,0,0.7);
     color-scheme: dark;
+  }
+  html.dark body{
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(178,75,255,0.14), transparent 42%),
+      radial-gradient(circle at 88% 18%, rgba(255,79,216,0.10), transparent 40%);
+  }
+  html.dark .logo{
+    box-shadow: 0 0 18px 2px rgba(178,75,255,0.65);
+  }
+  html.dark .day-pill.active{
+    box-shadow: 0 0 16px 1px rgba(178,75,255,0.6);
+  }
+  html.dark .live-dot{
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 0 10px 1px var(--accent);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -110,17 +124,20 @@
     box-shadow: var(--shadow);
     transition:background .35s ease, border-color .35s ease;
   }
-  .ring-box{position:relative; flex:none; width:128px; height:128px;}
-  .ring-box svg{width:100%; height:100%; display:block;}
-  .ring-center{
-    position:absolute; inset:0; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; text-align:center;
+  .ring-box{
+    position:relative; flex:none;
+    width:110px; height:110px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:22px;
   }
   .ring-time{
     font-family:'JetBrains Mono', monospace; font-weight:700;
-    font-size:1.02rem; letter-spacing:-.5px;
+    font-size:1.35rem; letter-spacing:-.5px;
   }
-  .ring-label{font-size:.55rem; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-top:2px; font-weight:700;}
+  .ring-label{font-size:.55rem; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-top:4px; font-weight:700;}
   .hero-text{flex:1; min-width:0;}
   .hero-eyebrow{
     font-size:.68rem; font-weight:800; letter-spacing:.5px; text-transform:uppercase;
@@ -224,8 +241,8 @@
     cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
     position:relative; transition: transform .15s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease;
   }
-  .item-chip.veg{color:var(--veg); }
-  .item-chip.nonveg{color:var(--nonveg); }
+  .item-chip.veg{color:var(--veg); background:var(--veg-soft); border-color:var(--veg);}
+  .item-chip.nonveg{color:var(--nonveg); background:var(--nonveg-soft); border-color:var(--nonveg);}
   .item-chip .tag-emoji{font-size:.82rem; line-height:1;}
   .item-chip.pressing{transform:scale(0.94); box-shadow: inset 0 0 0 2px var(--turmeric);}
   .item-chip.pinned{
@@ -239,6 +256,18 @@
   @keyframes pulseHit{
     0%,100%{ box-shadow: 0 0 0 2px var(--turmeric); }
     50%{ box-shadow: 0 0 0 5px var(--turmeric); }
+  }
+
+  /* ---------- Section header tint (veg / non-veg) ---------- */
+  .section[data-section^="veg-"] .section-toggle{
+    background:var(--veg-soft);
+    padding:8px 10px;
+    border-radius:12px;
+  }
+  .section[data-section^="nv-"] .section-toggle{
+    background:var(--nonveg-soft);
+    padding:8px 10px;
+    border-radius:12px;
   }
 
   /* ---------- Search ---------- */
@@ -340,11 +369,8 @@
 
   <section class="hero" id="hero">
     <div class="ring-box">
-      <svg viewBox="0 0 140 140" id="ringSvg"></svg>
-      <div class="ring-center">
-        <div class="ring-time" id="ringTime">--:--</div>
-        <div class="ring-label">Now</div>
-      </div>
+      <div class="ring-time" id="ringTime">--:--</div>
+      <div class="ring-label">Now</div>
     </div>
     <div class="hero-text">
       <div class="hero-eyebrow"><span class="live-dot"></span><span id="heroEyebrow">Live status</span></div>
@@ -504,34 +530,6 @@ let prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme:
 applyMode(prefersDark);
 modeBtn.addEventListener('click', () => applyMode(!root.classList.contains('dark')));
 
-/* ===================== RING (signature element) ===================== */
-const ringSvg = document.getElementById('ringSvg');
-const CX=70, CY=70, R=56, TRACK_W=11, ARC_W=11;
-
-function polar(cx,cy,r,angleDeg){
-  const rad = angleDeg * Math.PI/180;
-  return {x: cx + r*Math.cos(rad), y: cy + r*Math.sin(rad)};
-}
-function describeArc(cx,cy,r,startDeg,endDeg){
-  const s = polar(cx,cy,r,startDeg);
-  const e = polar(cx,cy,r,endDeg);
-  const large = (endDeg-startDeg) <= 180 ? 0 : 1;
-  return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
-}
-function minutesToDeg(mins){ return (mins/1440)*360 - 90; }
-
-function buildRing(){
-  let svg = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--ring-track)" stroke-width="${TRACK_W}"/>`;
-  MEALS.forEach(m=>{
-    const startMin = m.sh*60+m.sm, endMin = m.eh*60+m.em;
-    const d = describeArc(CX,CY,R, minutesToDeg(startMin), minutesToDeg(endMin));
-    svg += `<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="${ARC_W}" stroke-linecap="round" opacity="0.85"/>`;
-  });
-  svg += `<circle id="nowDot" cx="${CX}" cy="${CY-R}" r="5" fill="var(--turmeric)" stroke="var(--surface)" stroke-width="2"/>`;
-  ringSvg.innerHTML = svg;
-}
-buildRing();
-
 /* ===================== TIME / STATUS HELPERS ===================== */
 function atToday(h,m,dayOffset=0){
   const d = new Date();
@@ -557,9 +555,6 @@ function mealStatus(meal, now){
 }
 
 /* ===================== NEXT-OCCURRENCE FINDER (search + pins) ===================== */
-// Returns list of {dayKey, dayOffset, mealKey, itemName, startDate} for every future/current
-// occurrence of items whose name includes `query` (case-insensitive), searched across the
-// next 7 days starting today, in chronological order.
 function findOccurrences(query, limit){
   const q = query.trim().toLowerCase();
   if(!q) return [];
@@ -582,7 +577,6 @@ function findOccurrences(query, limit){
   return results.sort((a,b)=>a.startDate-b.startDate).slice(0, limit||999);
 }
 
-// Same, but for a single exact item name (used by pinned favorites) -> returns just the next one
 function nextOccurrenceForItem(itemName){
   const now = new Date();
   const nameLower = itemName.toLowerCase();
@@ -741,7 +735,6 @@ function attachChipInteractions(){
     chip.addEventListener('mouseup', cancel);
     chip.addEventListener('mouseleave', cancel);
 
-    // prevent a short tap right after a long-press from double-firing anything
     chip.addEventListener('click', (e)=>{
       if(longPressed){ e.preventDefault(); }
     });
@@ -858,7 +851,6 @@ function jumpToOccurrence(dayKey, dayOffset, mealKey, itemName){
     const card = mealsContainer.querySelector(`.meal-card[data-meal="${mealKey}"]`);
     if(card){
       card.scrollIntoView({behavior:'smooth', block:'center'});
-      // make sure both veg/non-veg sections are open so the chip is visible
       card.querySelectorAll('.section.collapsed').forEach(s=>s.classList.remove('collapsed'));
       const chip = [...card.querySelectorAll('.item-chip[data-item]')].find(c=>c.dataset.item===itemName);
       if(chip){
@@ -886,16 +878,14 @@ const heroTitle = document.getElementById('heroTitle');
 const heroEyebrow = document.getElementById('heroEyebrow');
 const heroCount = document.getElementById('heroCount');
 const heroCountLabel = document.getElementById('heroCountLabel');
-const nowDot = document.getElementById('nowDot');
 
 function checkPinnedReminders(now){
   if(!('Notification' in window) || Notification.permission !== 'granted') return;
   pinnedItems.forEach(name=>{
     const occ = nextOccurrenceForItem(name);
-    if(!occ || occ.dayOffset!==0) return; // only notify for today's upcoming window
+    if(!occ || occ.dayOffset!==0) return;
     const msToStart = occ.startDate - now;
     const key = name+'|'+occ.mealKey+'|'+occ.dayOffset;
-    // fire a reminder 10 minutes before the meal opens
     if(msToStart>0 && msToStart<=10*60*1000 && !notifiedThisSession.has(key)){
       notifiedThisSession.add(key);
       try{
@@ -910,13 +900,8 @@ function checkPinnedReminders(now){
 function updateLiveStatuses(){
   const now = new Date();
 
-  // ring clock + dot
   ringTimeEl.textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  const mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
-  const pos = polar(CX,CY,R, minutesToDeg(mins));
-  if(nowDot){ nowDot.setAttribute('cx', pos.x); nowDot.setAttribute('cy', pos.y); }
 
-  // find hero meal: open first, else nearest upcoming, else tomorrow breakfast
   let heroMeal = null, heroInfo = null;
   for(const meal of MEALS){
     const info = mealStatus(meal, now);
@@ -945,7 +930,6 @@ function updateLiveStatuses(){
   }
   heroCount.innerHTML = fmtDuration(heroInfo.target - now) + `<span>${heroCountLabel.textContent}</span>`;
 
-  // per-card badges + remaining time (today view only)
   if(selectedDay===todayKey){
     MEALS.forEach(meal=>{
       const info = mealStatus(meal, now);
