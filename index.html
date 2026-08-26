@@ -213,12 +213,24 @@
 
   .section{margin-top:12px; border-top:1px dashed var(--border); padding-top:12px;}
   .section-label{
-    display:flex; align-items:center; gap:8px; font-weight:700; font-size:.82rem; color:var(--text);
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-weight:700; font-size:.82rem; color:var(--text);
   }
+  .section-label .left-group{display:flex; align-items:center; gap:8px;}
   .dot{width:9px;height:9px;border-radius:50%; flex:none;}
   .dot.veg{background:var(--veg);}
   .dot.nonveg{background:var(--nonveg);}
+  .dot.common{background:var(--turmeric);}
   .section-label .count{color:var(--text-muted); font-weight:600;}
+  .cal-badge{
+    font-family:'JetBrains Mono', monospace; font-size:.66rem; font-weight:700;
+    color:var(--text-muted); background:var(--surface); border:1px solid var(--border);
+    padding:3px 8px; border-radius:999px; white-space:nowrap; flex:none;
+  }
+  .chip-cal{
+    font-family:'JetBrains Mono', monospace; font-size:.66rem; font-weight:700;
+    opacity:.72; line-height:1;
+  }
 
   .meal-expand-btn{
     flex:none; width:30px; height:30px; border-radius:50%;
@@ -246,6 +258,7 @@
   }
   .item-chip.veg{color:var(--veg); background:var(--veg-soft); border-color:var(--veg);}
   .item-chip.nonveg{color:var(--nonveg); background:var(--nonveg-soft); border-color:var(--nonveg);}
+  .item-chip.common{color:var(--text-muted); background:var(--surface-2); border-color:var(--border);}
   .item-chip .tag-emoji{font-size:.82rem; line-height:1;}
   .item-chip.pressing{transform:scale(0.94); box-shadow: inset 0 0 0 2px var(--turmeric);}
   .item-chip.pinned{
@@ -261,7 +274,12 @@
     50%{ box-shadow: 0 0 0 5px var(--turmeric); }
   }
 
-  /* ---------- Section header tint (veg / non-veg) ---------- */
+  /* ---------- Section header tint (common / veg / non-veg) ---------- */
+  .section[data-section^="common-"] .section-label{
+    background:var(--surface-2);
+    padding:8px 10px;
+    border-radius:12px;
+  }
   .section[data-section^="veg-"] .section-label{
     background:var(--veg-soft);
     padding:8px 10px;
@@ -272,6 +290,38 @@
     padding:8px 10px;
     border-radius:12px;
   }
+
+  /* ---------- Filter Dropdown ---------- */
+  .filter-dropdown-wrap{ position:relative; margin-top:14px; }
+  .filter-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 16px; border-radius:999px; border:1.5px solid var(--accent);
+    background:var(--surface); color:var(--accent); font-weight:700; font-size:.85rem;
+    cursor:pointer; font-family:'Manrope',sans-serif; transition: background .25s ease, color .25s ease;
+  }
+  .filter-btn svg{ width:16px; height:16px; flex:none; }
+  .filter-btn .filter-chevron{ width:13px; height:13px; transition: transform .25s ease; }
+  .filter-dropdown-wrap.open .filter-btn .filter-chevron{ transform: rotate(180deg); }
+  .filter-btn.has-selection{ background:var(--accent); color:#fff; }
+  .filter-menu{
+    position:absolute; top:calc(100% + 8px); left:0; z-index:30;
+    min-width:200px;
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    box-shadow: var(--shadow); overflow:hidden;
+    display:none; flex-direction:column;
+  }
+  .filter-dropdown-wrap.open .filter-menu{ display:flex; }
+  .filter-option{
+    display:flex; align-items:center; gap:8px;
+    padding:12px 14px; border:none; background:none; color:var(--text);
+    font-family:'Manrope',sans-serif; font-weight:600; font-size:.85rem;
+    cursor:pointer; text-align:left; border-bottom:1px solid var(--border);
+    transition: background .2s ease;
+  }
+  .filter-option:last-child{ border-bottom:none; }
+  .filter-option:active{ background:var(--surface-2); }
+  .filter-option.active{ background:var(--accent-soft); color:var(--accent); }
+  .filter-option .fo-emoji{ font-size:.95rem; }
 
   /* ---------- Search ---------- */
   .search-wrap{ margin-top:14px; position:relative; }
@@ -391,6 +441,18 @@
     <div class="search-results" id="searchResults"></div>
   </div>
 
+  <div class="filter-dropdown-wrap" id="filterDropdownWrap">
+    <button class="filter-btn" id="filterBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+      <span id="filterBtnLabel">Filter</span>
+      <svg class="filter-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="filter-menu" id="filterMenu">
+      <button class="filter-option" data-metric="calories"><span class="fo-emoji">🔥</span> Filter by Calories</button>
+      <button class="filter-option" data-metric="protein"><span class="fo-emoji">💪</span> Filter by Protein</button>
+    </div>
+  </div>
+
   <div class="pinned-section" id="pinnedSection">
     <div class="pinned-heading">⭐ Pinned favorites</div>
     <div class="pinned-list" id="pinnedList"></div>
@@ -411,9 +473,10 @@
     <div class="notes">
       <b>Note:</b> Menu for medically sick boarders can be provided on prior information — khichdi / mix boiled vegetables.<br>
       <b>Applicable quantity:</b> Banana (1pc), Egg (2pcs), Chicken (4pcs), Fish (2pcs), Vegetable chop (2pcs), Piyazi (2pcs).<br>
-      <b>Diet tags:</b> 💪 High Protein · 🍃 Light Diet — shown next to relevant dishes.
+      <b>Diet tags:</b> 💪 High Protein · 🍃 Light Diet — shown next to relevant dishes.<br>
+      <b>Calories / Protein:</b> use the filter above to show approximate per-serving calories or protein next to each dish in the Veg and Non-Veg sections (not shown for Common staples).
     </div>
-    <div class="credit">Made by Dibyojyoti - Vibe Coded · Timings — Breakfast 7–10am · Lunch 1–3pm · Snacks 6–7pm · Dinner 8–10pm</div>
+    <div class="credit">Effective from 24.08.2026 · Timings — Breakfast 7–10am · Lunch 1–3pm · Snacks 6–7pm · Dinner 8–10pm</div>
   </footer>
 
 </div>
@@ -498,6 +561,69 @@ function getDietTag(name){
   return null;
 }
 
+/* ===================== CALORIE ESTIMATES (per serving, approximate) ===================== */
+const CALORIES = {
+  "Corn Flakes with Milk & Banana":220,"Choley Bhatura":450,"Puri Aloo Curry":350,"Coffee":60,
+  "Rice":200,"Roti":120,"Dal":150,"Veg Kolhapuri":180,"Aloo Parwal Kassa":150,"Mix Bhaja":130,
+  "French Fries":250,"Plain Curd":60,"Pickle":20,"Vegetable Chop":150,"Ketchup":20,"Tea":50,
+  "Dal Fry":160,"Mutter Paneer":220,"Kadhai Paneer":250,"Semiya Kheer":180,"Rice Kheer":200,
+  "Idli":120,"Sambar":100,"Chutney":40,"Poha":200,"Ghuguni":180,"Egg Curry":200,"Egg Kalia":210,
+  "Malai Kofta":280,"Bhindi Aloo Masala":150,"Tamato Khatamitha":80,"Coin Papad":40,"Salad":30,
+  "Sprout Chaat":120,"Fried Rice":250,"Rajma Masala":200,"Veg Jaypuri":150,"Mix Bhaji":130,
+  "Gulab Jamun":150,"Bread (5pc)":350,"Butter (1pc)":40,"Jam (1pc)":30,"Veg Cutlet":150,
+  "Boiled Egg (2pc)":140,"Fish Kalia":220,"Fish Homestyle with Potato":230,"Veg Manchurian":200,
+  "Aloo Bharta":130,"Nali":60,"Biscuit":80,"Chicken Home Style Curry":250,"Chicken Hyderabadi":270,
+  "Paneer Bhurji":220,"Paneer Bharta":210,"Veg Chowmin":250,"Veg Pasta":280,"Punjabi Chole Masala":220,
+  "Navratna Korma":230,"Dahi Kadhi":120,"Chaat Papdi":200,"Puri":100,"Chana Dal Nariyal Curry":180,
+  "Aloo Dum":160,"Ice Cream":150,"Fruits Custard":130,"Fish Mustard":220,"Fish Punjabi":230,
+  "Veg Jhalfry with Paneer":220,"Aloo Kalara Chips":150,"Jhal Muri":150,"Veg Biriyani":320,
+  "Paneer Butter Masala":260,"Chicken Biriyani":380,"Dahi Raita":70,"Vada":180,"Dahivada":150,
+  "Aludum":160,"Soyabean Aloo Curry":180,"Besan Aloo Curry":170,"Aloo Chokha":120,"Sriram Papad":40,
+  "Pakodi":180,"Uttapam":200,"Chutny":40,"Chakuli":150,"Alu Masala":150,"Egg Curry with Potato":220,
+  "Egg Masala":200,"Cabbage Green":80,"Muter Alu Curry":150,"Dahi Salad":60,"Maggi":250,"Piyazi":150,
+  "Chilly Chicken":280,"Chilly Paneer":250,"Boondi":100,"Icecream":150,"Chicken Butter Masala":270,
+  "Chicken Kassa":260,"Sahi Paneer":250,"Paneer Khurma":240,"Kheera Gaja":150
+};
+function getCalories(name){
+  return CALORIES[name] != null ? CALORIES[name] : 150; // fallback estimate
+}
+function sumCalories(items){
+  return items.reduce((total, i)=> total + getCalories(i[0]), 0);
+}
+
+/* ===================== PROTEIN ESTIMATES (grams per serving, approximate) ===================== */
+const PROTEIN = {
+  "Corn Flakes with Milk & Banana":8,"Choley Bhatura":12,"Puri Aloo Curry":6,"Coffee":2,
+  "Rice":4,"Roti":3,"Dal":9,"Veg Kolhapuri":5,"Aloo Parwal Kassa":3,"Mix Bhaja":3,
+  "French Fries":3,"Plain Curd":6,"Pickle":1,"Vegetable Chop":4,"Ketchup":0,"Tea":1,
+  "Dal Fry":9,"Mutter Paneer":12,"Kadhai Paneer":14,"Semiya Kheer":5,"Rice Kheer":5,
+  "Idli":4,"Sambar":6,"Chutney":1,"Poha":5,"Ghuguni":9,"Egg Curry":12,"Egg Kalia":12,
+  "Malai Kofta":8,"Bhindi Aloo Masala":3,"Tamato Khatamitha":1,"Coin Papad":2,"Salad":2,
+  "Sprout Chaat":8,"Fried Rice":6,"Rajma Masala":10,"Veg Jaypuri":4,"Mix Bhaji":3,
+  "Gulab Jamun":3,"Bread (5pc)":10,"Butter (1pc)":0,"Jam (1pc)":0,"Veg Cutlet":4,
+  "Boiled Egg (2pc)":12,"Fish Kalia":20,"Fish Homestyle with Potato":20,"Veg Manchurian":5,
+  "Aloo Bharta":3,"Nali":2,"Biscuit":2,"Chicken Home Style Curry":22,"Chicken Hyderabadi":24,
+  "Paneer Bhurji":14,"Paneer Bharta":13,"Veg Chowmin":6,"Veg Pasta":7,"Punjabi Chole Masala":10,
+  "Navratna Korma":6,"Dahi Kadhi":5,"Chaat Papdi":5,"Puri":2,"Chana Dal Nariyal Curry":8,
+  "Aloo Dum":3,"Ice Cream":3,"Fruits Custard":4,"Fish Mustard":20,"Fish Punjabi":20,
+  "Veg Jhalfry with Paneer":11,"Aloo Kalara Chips":3,"Jhal Muri":4,"Veg Biriyani":6,
+  "Paneer Butter Masala":13,"Chicken Biriyani":22,"Dahi Raita":4,"Vada":6,"Dahivada":6,
+  "Aludum":3,"Soyabean Aloo Curry":9,"Besan Aloo Curry":6,"Aloo Chokha":3,"Sriram Papad":2,
+  "Pakodi":5,"Uttapam":5,"Chutny":1,"Chakuli":3,"Alu Masala":3,"Egg Curry with Potato":12,
+  "Egg Masala":12,"Cabbage Green":2,"Muter Alu Curry":4,"Dahi Salad":3,"Maggi":6,"Piyazi":4,
+  "Chilly Chicken":24,"Chilly Paneer":14,"Boondi":3,"Icecream":3,"Chicken Butter Masala":23,
+  "Chicken Kassa":22,"Sahi Paneer":13,"Paneer Khurma":12,"Kheera Gaja":2
+};
+function getProtein(name){
+  return PROTEIN[name] != null ? PROTEIN[name] : 5; // fallback estimate
+}
+
+/* ===================== COMMON / STAPLE ITEMS ===================== */
+// These appear in almost every meal and are split into their own "Common" tab,
+// separate from the Veg/Non-Veg breakdown (and without a calorie counter).
+const COMMON_ITEMS = new Set(["Rice","Roti","Dal","Dal Fry","Puri","Fried Rice","Bread (5pc)","Butter (1pc)","Jam (1pc)","Ketchup","Tea","Salad","Pickle","Nali","Aloo Bharta"]);
+function isCommonItem(name){ return COMMON_ITEMS.has(name); }
+
 /* ===================== STATE ===================== */
 const todayKey = DAY_KEYS[new Date().getDay()];
 let selectedDay = todayKey;
@@ -515,6 +641,7 @@ function savePins(){
 }
 let pinnedItems = loadPins();
 let notifiedThisSession = new Set(); // avoid duplicate notifications per meal window
+let activeMetric = null; // null | 'calories' | 'protein' — which per-dish metric to display
 
 /* ===================== DARK MODE ===================== */
 const root = document.documentElement;
@@ -633,12 +760,19 @@ function badgeFor(status){
   return '';
 }
 
-function chipHtml(name, isVeg){
+function chipHtml(name, kind){
+  // kind: 'veg' | 'nonveg' | 'common'
   const tag = getDietTag(name);
   const pinned = pinnedItems.has(name);
   const tagHtml = tag ? `<span class="tag-emoji" title="${tag.label}">${tag.emoji}</span>` : '';
   const pinHtml = pinned ? `<span class="pin-mark">📌</span>` : '';
-  return `<li class="item-chip ${isVeg?'veg':'nonveg'} ${pinned?'pinned':''}" data-item="${name.replace(/"/g,'&quot;')}">${pinHtml}${name}${tagHtml}</li>`;
+  let metricHtml = '';
+  if(kind!=='common' && activeMetric==='calories'){
+    metricHtml = `<span class="chip-cal">${getCalories(name)} kcal</span>`;
+  } else if(kind!=='common' && activeMetric==='protein'){
+    metricHtml = `<span class="chip-cal">${getProtein(name)}g protein</span>`;
+  }
+  return `<li class="item-chip ${kind} ${pinned?'pinned':''}" data-item="${name.replace(/"/g,'&quot;')}">${pinHtml}${name}${tagHtml}${metricHtml}</li>`;
 }
 
 function renderMeals(){
@@ -648,12 +782,15 @@ function renderMeals(){
   const dayData = MENU[selectedDay];
   mealsContainer.innerHTML = MEALS.map((meal, idx)=>{
     const items = dayData[meal.key];
-    const vegItems = items.filter(i=>i[1]===V);
-    const nvItems = items.filter(i=>i[1]===NV);
+    const commonItems = items.filter(i=>isCommonItem(i[0]));
+    const remainingItems = items.filter(i=>!isCommonItem(i[0]));
+    const vegItems = remainingItems.filter(i=>i[1]===V);
+    const nvItems = remainingItems.filter(i=>i[1]===NV);
     const timeStr = `${to12(meal.sh,meal.sm)} – ${to12(meal.eh,meal.em)}`;
 
-    const vegChips = vegItems.map(i=>chipHtml(i[0], true)).join('');
-    const nvChips = nvItems.map(i=>chipHtml(i[0], false)).join('');
+    const commonChips = commonItems.map(i=>chipHtml(i[0], 'common')).join('');
+    const vegChips = vegItems.map(i=>chipHtml(i[0], 'veg')).join('');
+    const nvChips = nvItems.map(i=>chipHtml(i[0], 'nonveg')).join('');
 
     const isToday = selectedDay===todayKey;
 
@@ -677,14 +814,20 @@ function renderMeals(){
         </div>
       </div>
 
+      ${commonItems.length ? `
+      <div class="section" data-section="common-${meal.key}">
+        <div class="section-label"><span class="left-group"><span class="dot common"></span>Common <span class="count">(${commonItems.length})</span></span></div>
+        <ul class="item-list">${commonChips}</ul>
+      </div>` : ''}
+
       <div class="section" data-section="veg-${meal.key}">
-        <div class="section-label"><span class="dot veg"></span>Veg <span class="count">(${vegItems.length})</span></div>
+        <div class="section-label"><span class="left-group"><span class="dot veg"></span>Veg <span class="count">(${vegItems.length})</span></span></div>
         <ul class="item-list">${vegChips || '<li class="item-chip veg">No veg items listed</li>'}</ul>
       </div>
 
       ${nvItems.length ? `
       <div class="section" data-section="nv-${meal.key}">
-        <div class="section-label"><span class="dot nonveg"></span>Non-Veg <span class="count">(${nvItems.length})</span></div>
+        <div class="section-label"><span class="left-group"><span class="dot nonveg"></span>Non-Veg <span class="count">(${nvItems.length})</span></span></div>
         <ul class="item-list">${nvChips}</ul>
       </div>` : ''}
     </div>`;
@@ -804,6 +947,37 @@ function renderPinnedSection(){
     });
   });
 }
+
+/* ===================== METRIC FILTER (calories / protein) ===================== */
+const filterDropdownWrap = document.getElementById('filterDropdownWrap');
+const filterBtn = document.getElementById('filterBtn');
+const filterBtnLabel = document.getElementById('filterBtnLabel');
+const filterMenu = document.getElementById('filterMenu');
+
+function renderMetricFilter(){
+  filterMenu.querySelectorAll('.filter-option').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.metric===activeMetric);
+  });
+  if(activeMetric==='calories'){ filterBtnLabel.textContent = 'Calories'; filterBtn.classList.add('has-selection'); }
+  else if(activeMetric==='protein'){ filterBtnLabel.textContent = 'Protein'; filterBtn.classList.add('has-selection'); }
+  else { filterBtnLabel.textContent = 'Filter'; filterBtn.classList.remove('has-selection'); }
+}
+
+filterBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  filterDropdownWrap.classList.toggle('open');
+});
+filterMenu.querySelectorAll('.filter-option').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    activeMetric = activeMetric===btn.dataset.metric ? null : btn.dataset.metric;
+    renderMetricFilter();
+    renderMeals();
+    filterDropdownWrap.classList.remove('open');
+  });
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.filter-dropdown-wrap')) filterDropdownWrap.classList.remove('open');
+});
 
 /* ===================== SEARCH & HIGHLIGHT ===================== */
 const searchInput = document.getElementById('searchInput');
@@ -949,6 +1123,7 @@ function updateLiveStatuses(){
 
 /* ===================== INIT ===================== */
 renderDayTabs();
+renderMetricFilter();
 renderMeals();
 renderPinnedSection();
 updateLiveStatuses();
